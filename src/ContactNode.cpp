@@ -31,6 +31,7 @@ public:
   }
 
   void autoaim_callback(const gary_msgs::msg::AutoAIM msg) {
+    flag_new_autoaim_msg = 1;
     RCLCPP_INFO(this->get_logger(),
                 "===================== FROM autoaim  =====================");
     comm.set_tx_pitch(msg.pitch + comm.get_rx_Pitch());
@@ -41,19 +42,23 @@ public:
   }
 
   void tx_timer_callback() {
-    RCLCPP_INFO(this->get_logger(),
-                "===================== SENDING =====================");
+    if (flag_new_autoaim_msg) // if there comes the new message from the autoaim
+    {
+      RCLCPP_INFO(this->get_logger(),
+                  "===================== SENDING =====================");
 
-    comm.set_tx_header(0xA3);
+      comm.set_tx_header(0xA3);
 
-    // the pitch, yaw, found are setted in the autoaim_callback
-    // WARNING: the shoot_or_not is setted to 0 in order to secure demage
-    comm.set_tx_shoot_or_not(0);
+      // the pitch, yaw, found are setted in the autoaim_callback
+      // WARNING: the shoot_or_not is setted to 0 in order to secure demage
+      comm.set_tx_shoot_or_not(0);
 
-    RCLCPP_INFO(this->get_logger(), "Pitch: %f, Yaw: %f",
-                comm.get_tx_struct().pitch, comm.get_tx_struct().yaw);
+      RCLCPP_INFO(this->get_logger(), "Pitch: %f, Yaw: %f",
+                  comm.get_tx_struct().pitch, comm.get_tx_struct().yaw);
 
-    comm.Write(comm.get_tx_buffer(), comm.tx_struct_len, true);
+      comm.Write(comm.get_tx_buffer(), comm.tx_struct_len, true);
+      flag_new_autoaim_msg = 0;
+    }
   }
 
   void rx_timer_callback() {
@@ -110,6 +115,8 @@ public:
 private:
   float pitch_offset = 0.00;
   float yaw_offset = 0.00;
+
+  uint8_t flag_new_autoaim_msg = 0;
 
   rclcpp::Subscription<gary_msgs::msg::AutoAIM>::SharedPtr _autoaim_sub_;
   rclcpp::Publisher<gary_msgs::msg::AutoAIM>::SharedPtr _autoaim_pub_;
