@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(contact)
+project(contact_infantryDL)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
